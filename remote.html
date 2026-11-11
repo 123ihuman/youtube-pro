@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ॐ ट्यूब रिमोट</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(180deg, #1a1a1a 0%, #2b0000 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 16px;
+            user-select: none;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 1.6rem;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .status {
+            font-size: 0.85rem;
+            margin-top: 8px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            background: rgba(255,255,255,0.1);
+            color: #aaa;
+        }
+        .status.connected {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+        .status.error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+        .remote-host {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 6px;
+            font-family: monospace;
+        }
+        .pad {
+            width: 100%;
+            max-width: 400px;
+            display: grid;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .row {
+            display: grid;
+            gap: 12px;
+        }
+        .row-2 { grid-template-columns: 1fr 1fr; }
+        .row-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .row-main { grid-template-columns: 1fr 1fr 1fr; }
+
+        button {
+            background: rgba(255,255,255,0.08);
+            border: 2px solid rgba(255,215,0,0.3);
+            color: #fff;
+            padding: 18px 8px;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+            min-height: 70px;
+            justify-content: center;
+        }
+        button:active {
+            background: rgba(211,47,47,0.6);
+            border-color: #FFD700;
+            transform: scale(0.96);
+        }
+        button .icon {
+            font-size: 1.6rem;
+            line-height: 1;
+        }
+        button .label {
+            font-size: 0.75rem;
+            color: #ccc;
+            font-weight: 500;
+        }
+        .big-btn {
+            padding: 24px 8px;
+            min-height: 90px;
+        }
+        .big-btn .icon { font-size: 2rem; }
+        .play-btn {
+            background: linear-gradient(135deg, #D32F2F, #E65100);
+            border-color: #FFD700;
+        }
+        .stop-btn {
+            background: rgba(100,100,100,0.3);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .disconnected-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 999;
+            padding: 20px;
+            text-align: center;
+        }
+        .disconnected-overlay.show { display: flex; }
+        .disconnected-overlay h2 {
+            color: #FFD700;
+            margin-bottom: 12px;
+            font-size: 1.4rem;
+        }
+        .disconnected-overlay p {
+            color: #aaa;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🕉️ ॐ ट्यूब रिमोट</h1>
+    <div class="status" id="status">⏳ कनेक्ट हो रहा है...</div>
+    <div class="remote-host" id="hostInfo"></div>
+</div>
+
+<div class="pad">
+    <!-- Play/Pause main -->
+    <div class="row row-2">
+        <button class="big-btn play-btn" onclick="send('toggle')">
+            <div class="icon">⏯️</div>
+            <div class="label">प्ले / पॉज़</div>
+        </button>
+        <button class="big-btn stop-btn" onclick="send('stop')">
+            <div class="icon">⏹</div>
+            <div class="label">बंद करें</div>
+        </button>
+    </div>
+
+    <!-- Prev / Next -->
+    <div class="row row-main">
+        <button onclick="send('prev')">
+            <div class="icon">⏮</div>
+            <div class="label">पिछला</div>
+        </button>
+        <button onclick="send('fullscreen')">
+            <div class="icon">⛶</div>
+            <div class="label">फुल स्क्रीन</div>
+        </button>
+        <button onclick="send('next')">
+            <div class="icon">⏭</div>
+            <div class="label">अगला</div>
+        </button>
+    </div>
+
+    <!-- Volume -->
+    <div class="row row-2">
+        <button onclick="send('volumedown')">
+            <div class="icon">🔉</div>
+            <div class="label">आवाज़ कम</div>
+        </button>
+        <button onclick="send('volumeup')">
+            <div class="icon">🔊</div>
+            <div class="label">आवाज़ ज़्यादा</div>
+        </button>
+    </div>
+
+    <!-- Seek -->
+    <div class="row row-2">
+        <button onclick="send('seekback')">
+            <div class="icon">⏪</div>
+            <div class="label">10 सेकंड पीछे</div>
+        </button>
+        <button onclick="send('seekforward')">
+            <div class="icon">⏩</div>
+            <div class="label">10 सेकंड आगे</div>
+        </button>
+    </div>
+
+    <!-- Repeat -->
+    <div class="row row-1" style="grid-template-columns:1fr;">
+        <button onclick="send('repeat')">
+            <div class="icon">🔁</div>
+            <div class="label">दोहराव चालू / बंद</div>
+        </button>
+    </div>
+</div>
+
+<!-- Disconnected overlay -->
+<div class="disconnected-overlay" id="discOverlay">
+    <h2>📡 कनेक्शन टूट गया</h2>
+    <p>कृपया मुख्य फ़ोन के हॉटस्पॉट से दोबारा कनेक्ट करें।</p>
+</div>
+
+<script>
+    // Parse URL params
+    const params = new URLSearchParams(location.search);
+    const ip = params.get('ip') || '192.168.43.1';
+    const port = params.get('port') || '8080';
+    const wsUrl = 'ws://' + ip + ':' + port;
+
+    const statusEl = document.getElementById('status');
+    const hostEl = document.getElementById('hostInfo');
+    const overlay = document.getElementById('discOverlay');
+
+    hostEl.innerText = wsUrl;
+
+    let ws = null;
+    let reconnectTimer = null;
+    let connectedOnce = false;
+
+    function connect() {
+        try {
+            ws = new WebSocket(wsUrl);
+        } catch (e) {
+            setStatus('error', '❌ कनेक्शन शुरू नहीं हो सका');
+            return;
+        }
+
+        ws.onopen = () => {
+            console.log('✅ Connected to', wsUrl);
+            connectedOnce = true;
+            setStatus('connected', '✅ कनेक्ट हो गया');
+            overlay.classList.remove('show');
+        };
+
+        ws.onmessage = (e) => {
+            console.log('📩 From host:', e.data);
+        };
+
+        ws.onerror = (e) => {
+            console.warn('WebSocket error', e);
+        };
+
+        ws.onclose = () => {
+            console.log('❌ Disconnected');
+            setStatus('error', '❌ कनेक्शन टूट गया');
+            if (connectedOnce) {
+                overlay.classList.add('show');
+            }
+            // Retry connect
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connect, 3000);
+        };
+    }
+
+    function send(action) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            setStatus('error', '❌ कनेक्ट नहीं है');
+            return;
+        }
+        const payload = JSON.stringify({ action: action });
+        ws.send(payload);
+        console.log('➡️ Sent:', action);
+        // Visual feedback
+        statusEl.innerText = '📤 ' + action;
+        setTimeout(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+                setStatus('connected', '✅ कनेक्ट हो गया');
+            }
+        }, 800);
+    }
+
+    function setStatus(cls, text) {
+        statusEl.className = 'status' + (cls === 'connected' ? ' connected' : cls === 'error' ? ' error' : '');
+        statusEl.innerText = text;
+    }
+
+    // Start
+    connect();
+</script>
+</body>
+</html>
